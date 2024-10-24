@@ -81,6 +81,7 @@ class Mission:
         Mission.reference = missionData['reference'].values
         Mission.cave_height = missionData['cave_height'].values
         Mission.cave_depth = missionData['cave_depth'].values   
+        return cls(Mission.reference, Mission.cave_height, Mission.cave_depth)
 
 
 
@@ -98,12 +99,11 @@ class ClosedLoop:
         actions = np.zeros(T)
         self.plant.reset_state()
 
-        control = self.controller()  # Create an instance of Controller
 
         for t in range(T):
             positions[t] = self.plant.get_position()
             observation_t = self.plant.get_depth()
-            action = control.step(observation_t, mission.reference[t])  # Call step on the instance
+            action = self.controller.step(observation_t, mission.reference[t])  # Call step on the instance
             actions[t] = action
             self.plant.transition(action, disturbances[t])
 
