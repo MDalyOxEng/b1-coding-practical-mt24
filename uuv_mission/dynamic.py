@@ -85,11 +85,11 @@ class Mission:
 
 
 class ClosedLoop:
-    def __init__(self, plant: Submarine, controller):
+    def __init__(self, plant: Submarine, controller: ctrl.Controller):
         self.plant = plant
         self.controller = controller
 
-    def simulate(self, mission: Mission, disturbances: np.ndarray) -> Trajectory:
+    def simulate(self, mission: Mission, disturbances: np.ndarray, controller: ctrl.Controller) -> Trajectory:
         T = len(mission.reference)
         if len(disturbances) < T:
             raise ValueError("Disturbances must be at least as long as mission duration")
@@ -98,12 +98,12 @@ class ClosedLoop:
         actions = np.zeros(T)
         self.plant.reset_state()
 
-        controller = ctrl.Controller()  # Create an instance of Controller
+        control = controller()  # Create an instance of Controller
 
         for t in range(T):
             positions[t] = self.plant.get_position()
             observation_t = self.plant.get_depth()
-            action = controller.step(observation_t, mission.reference[t])  # Call step on the instance
+            action = control.step(observation_t, mission.reference[t])  # Call step on the instance
             actions[t] = action
             self.plant.transition(action, disturbances[t])
 
