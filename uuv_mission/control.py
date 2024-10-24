@@ -1,7 +1,7 @@
 # Description: Controller class for the UUV
 # Author: Michael Daly
 
-class Controller(measurement, reference):
+class Controller():
 
     def __init__(self, Kp = 0.15, Kd = 0.6, T = 1):
         self.Kp = Kp
