@@ -2,6 +2,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+import uuv_mission.control as ctrl
 from .terrain import generate_reference_and_limits
 
 class Submarine:
@@ -75,17 +77,20 @@ class Mission:
 
     @classmethod
     def from_csv(cls, file_name: str):
-        # You are required to implement this method
-        pass
+        missionData = pd.read_csv(file_name)
+        Mission.reference = missionData['reference'].values
+        Mission.cave_height = missionData['cave_height'].values
+        Mission.cave_depth = missionData['cave_depth'].values   
+        return cls(Mission.reference, Mission.cave_height, Mission.cave_depth)
+
 
 
 class ClosedLoop:
-    def __init__(self, plant: Submarine, controller):
+    def __init__(self, plant: Submarine, controller:ctrl.Controller):
         self.plant = plant
         self.controller = controller
 
-    def simulate(self,  mission: Mission, disturbances: np.ndarray) -> Trajectory:
-
+    def simulate(self, mission: Mission, disturbances: np.ndarray) -> Trajectory:
         T = len(mission.reference)
         if len(disturbances) < T:
             raise ValueError("Disturbances must be at least as long as mission duration")
@@ -94,11 +99,13 @@ class ClosedLoop:
         actions = np.zeros(T)
         self.plant.reset_state()
 
+
         for t in range(T):
             positions[t] = self.plant.get_position()
             observation_t = self.plant.get_depth()
-            # Call your controller here
-            self.plant.transition(actions[t], disturbances[t])
+            action = self.controller.step(observation_t, mission.reference[t])  # Call step on the instance
+            actions[t] = action
+            self.plant.transition(action, disturbances[t])
 
         return Trajectory(positions)
         
